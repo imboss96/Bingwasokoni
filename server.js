@@ -95,6 +95,15 @@ const settingsSchema = new mongoose.Schema({
 
 const Settings = mongoose.model('Settings', settingsSchema);
 
+// Add this with other schemas, after the Settings schema
+
+const storeSettingsSchema = new mongoose.Schema({
+  headerText: { type: String, default: 'Welcome to Bingwa Sokoni' },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+const StoreSettings = mongoose.model('StoreSettings', storeSettingsSchema);
+
 // ============== API ROUTES ==============
 
 app.get('/api', (req, res) => {
@@ -557,6 +566,57 @@ app.post('/create-admin', async (req, res) => {
   }
 });
 
+// Add these routes before the Frontend Proxy section
+
+// Get store settings
+app.get('/api/store-settings', async (req, res) => {
+  try {
+    let settings = await StoreSettings.findOne();
+    if (!settings) {
+      settings = new StoreSettings();
+      await settings.save();
+    }
+    res.json({
+      headerText: settings.headerText
+    });
+  } catch (err) {
+    console.error('Error fetching store settings:', err);
+    res.status(500).json({ message: 'Error fetching store settings' });
+  }
+});
+
+// Update store settings
+app.post('/api/store-settings', async (req, res) => {
+  const { headerText } = req.body;
+  
+  try {
+    let settings = await StoreSettings.findOne();
+    if (!settings) {
+      settings = new StoreSettings();
+    }
+    
+    if (headerText !== undefined) {
+      settings.headerText = headerText;
+    }
+    
+    settings.updatedAt = new Date();
+    await settings.save();
+    
+    console.log('✅ Store settings updated successfully');
+    
+    res.json({ 
+      success: true, 
+      message: 'Store settings updated successfully',
+      settings: {
+        headerText: settings.headerText
+      }
+    });
+  } catch (err) {
+    console.error('❌ Error updating store settings:', err);
+    res.status(500).json({ message: 'Error updating store settings' });
+  }
+});
+
 // ============== FRONTEND PROXY (Must be last route) ==============
 
 app.use('/', createProxyMiddleware({
@@ -575,7 +635,8 @@ app.use('/', createProxyMiddleware({
       '/register',
       '/login',
       '/create-test-user',
-      '/create-admin'
+      '/create-admin',
+      '/api/store-settings'  // Add this line
     ];
     // Check if the request path starts with any of the defined API routes
     return !apiRoutes.some(route => pathname.startsWith(route));
