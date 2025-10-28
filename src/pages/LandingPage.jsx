@@ -8,6 +8,7 @@ const LandingPage = () => {
   const [notification, setNotification] = useState(null); // alert
   const [modal, setModal] = useState({ open: false, offer: null, phone: "" });
   const [showNotification, setShowNotification] = useState(false); // for animation
+  const [headerText, setHeaderText] = useState("Welcome to Our store");
 
   // Track window resize
   useEffect(() => {
@@ -30,6 +31,18 @@ const LandingPage = () => {
           { id: 3, name: "Bundle C", price: "Ksh 300" },
         ]);
       });
+  }, []);
+
+  // Fetch store settings
+  useEffect(() => {
+    fetch("/api/store-settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.headerText) {
+          setHeaderText(data.headerText);
+        }
+      })
+      .catch((err) => console.error("Error fetching store settings:", err));
   }, []);
 
   const getGridColumns = () => {
@@ -166,7 +179,7 @@ const LandingPage = () => {
         {/* Welcome Section */}
         <section style={{ backgroundColor: "#2563eb", color: "white", padding: "5rem 1rem", textAlign: "center" }}>
           <h1 style={{ fontSize: windowWidth < 640 ? "2rem" : "2.5rem", fontWeight: "bold", marginBottom: "1rem" }}>
-            Welcome to Bingwa Sokoni
+            {headerText}
           </h1>
           <p style={{ fontSize: windowWidth < 640 ? "1rem" : "1.2rem" }}>Buy your data bundles and minutes easily!</p>
         </section>

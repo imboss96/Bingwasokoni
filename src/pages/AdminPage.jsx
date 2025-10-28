@@ -27,6 +27,8 @@ const App = () => {
     environment: "sandbox",
     callbackUrl: ""
   });
+  const [headerText, setHeaderText] = useState("");
+  const [updateMessage, setUpdateMessage] = useState("");
 
   // --- New State for Time, User Info, and UI Elements ---
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -409,6 +411,35 @@ const App = () => {
     }
   };
 
+  // --- Store header update handler ---
+  const updateStoreHeader = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/store-settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ headerText }),
+      });
+
+      if (response.ok) {
+        showAppNotification("Store name updated successfully! 🏪", "success");
+        setUpdateMessage("Store name updated successfully!");
+        setTimeout(() => setUpdateMessage(""), 3000);
+      } else {
+        throw new Error(`Failed to update store name - Status: ${response.status}`);
+      }
+    } catch (err) {
+      console.error("Error updating store name:", err);
+      showAppNotification("Error updating store name", "error");
+      setUpdateMessage("Failed to update store name");
+    } finally {
+      setLoading(false);
+    }
+  }, [headerText, showAppNotification]); // Add dependencies
+
+
   // --- Styles ---
   const styles = {
     // Container and layout
@@ -753,6 +784,52 @@ const App = () => {
         <input type="text" placeholder="Callback URL" value={settings.callbackUrl || ''} onChange={(e) => setSettings({ ...settings, callbackUrl: e.target.value })} style={styles.input} onFocus={e => e.target.style.borderColor = styles.inputFocus.borderColor} onBlur={e => e.target.style.borderColor = ''}/>
         <button onClick={handleSaveSettings} disabled={loading} style={styles.button} onMouseEnter={e => e.currentTarget.style.backgroundColor = styles.buttonHover.backgroundColor} onMouseLeave={e => e.currentTarget.style.backgroundColor = styles.button.backgroundColor}>{loading ? "Saving..." : "Save Settings"}</button>
       </div>
+      <div style={{ 
+  marginBottom: "2rem", 
+  padding: "1.5rem", 
+  backgroundColor: "white", 
+  borderRadius: "0.5rem",
+  boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+}}>
+  <h2 style={{ marginBottom: "1rem", fontSize: "1.5rem", fontWeight: "bold" }}>Store Settings</h2>
+  <div style={{ marginBottom: "1rem" }}>
+    <label style={{ display: "block", marginBottom: "0.5rem" }}>Store Name</label>
+    <input
+      type="text"
+      value={headerText}
+      onChange={(e) => setHeaderText(e.target.value)}
+      placeholder="Enter store name"
+      style={{
+        width: "100%",
+        padding: "0.5rem",
+        borderRadius: "0.25rem",
+        border: "1px solid #ccc",
+        marginBottom: "1rem"
+      }}
+    />
+    <button
+      onClick={updateStoreHeader}
+      style={{
+        backgroundColor: "#2563eb",
+        color: "white",
+        padding: "0.5rem 1rem",
+        border: "none",
+        borderRadius: "0.25rem",
+        cursor: "pointer"
+      }}
+    >
+      Update Store Name
+    </button>
+    {updateMessage && (
+      <p style={{ 
+        marginTop: "1rem",
+        color: updateMessage.includes("successfully") ? "#16a34a" : "#dc2626"
+      }}>
+        {updateMessage}
+      </p>
+    )}
+  </div>
+</div>
     </div>
   );
 
